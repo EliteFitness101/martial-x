@@ -3,9 +3,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { message } = req.body;
-
   try {
+    const { message } = req.body;
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -14,17 +14,20 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-5-mini",
-        input: `You are a professional Nigerian fitness coach. Give short, practical advice.\nUser: ${message}`
+        input: `You are coachB2K, a Nigerian boxing and fitness coach. Give short, practical advice.\nUser: ${message}`
       })
     });
 
     const data = await response.json();
 
-    res.status(200).json({
-      reply: data.output[0].content[0].text
-    });
+    const reply =
+      data.output?.[0]?.content?.[0]?.text ||
+      "Try again. No response.";
+
+    res.status(200).json({ reply });
 
   } catch (error) {
-    res.status(500).json({ error: "AI error" });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 }
