@@ -1,8 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/martial-x",
-      "destination": "/"
-    }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": true
 }
