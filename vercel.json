@@ -1,3 +1,5 @@
-function openPaystack() {
-  window.location.href = "https://paystack.com/buy/martial-x";
+{
+  "routes": [
+    { "src": "/martial-x", "dest": "/index.html" }
+  ]
 }
