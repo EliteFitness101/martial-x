@@ -1,4 +1,3 @@
-{
-  "cleanUrls": true,
-  "trailingSlash": true
+function openPaystack() {
+  window.location.href = "https://paystack.com/pay/your-link-here";
 }
