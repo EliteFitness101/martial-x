@@ -1,3 +1,3 @@
 function openPaystack() {
-  window.location.href = "https://paystack.shop/pay/elite-academy";
+  window.location.href = "https://paystack.com/buy/martial-x";
 }
