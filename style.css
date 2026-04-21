@@ -108,3 +108,7 @@ nav a:hover {
   font-size: 14px;
   letter-spacing: 2px;
 }
+#chatBox p {
+  font-size: 14px;
+  margin: 5px 0;
+}
