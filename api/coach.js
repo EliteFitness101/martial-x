@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.9565003:0ee605f297925da83c14ae1fd8436381}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
