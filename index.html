@@ -1,64 +1,69 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Martial X | Elite Martial Academy</title>
-  <link rel="stylesheet" href="style.css"/>
+  <title>ResoFit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header>
-  <h1>🥋 MARTIAL X</h1>
-  <p>Elite Martial Academy – Combat Fitness & Self Defense System</p>
-</header>
+<!-- NAV -->
+<nav>
+  <a href="/">Home</a>
+  <a href="/martial-x/">Martial X</a>
+  <a href="/elite-ng/">Elite NG</a>
+</nav>
 
-<section class="hero">
-  <h2>Build Strength. Burn Fat. Learn Self Defense.</h2>
-  <p>Boxing • Kickboxing • Karate • Taekwondo • Nigerian Combat Conditioning</p>
+<!-- HERO -->
+<div class="hero">
+  <h1>RESOFIT</h1>
+  <p>Fitness • Combat • Transformation</p>
 
-  <button onclick="openPaystack()" class="btn">
-    Join Now – ₦1,000 Intro Offer
-  </button>
-</section>
+  <a class="btn" href="/martial-x/">Start Martial X – ₦1,000</a>
+</div>
 
-<section class="grid">
-  <div class="card">🥊 Boxing Power Training</div>
-  <div class="card">🦵 Kickboxing Fat Burn System</div>
-  <div class="card">🛡 Real-Life Self Defense</div>
-  <div class="card">🧠 Mental Discipline Training</div>
-  <div style="max-width:700px;margin:40px auto;padding:20px;background:#111;border-radius:15px">
+<!-- FEATURES -->
+<div class="grid">
 
-  <h2 style="text-align:center;color:gold">🤖 ResoFit CoachB2K</h2>
-
-  <div id="chatBox" style="height:200px;overflow:auto;background:#000;padding:10px;border-radius:10px;margin-bottom:10px">
-    <p>👋 Hello, I'm your CoachB2K. What is your goal? (fat loss, muscle gain, martial fitness)</p>
+  <div class="card">
+    <h3>🥋 Martial X</h3>
+    <p>Combat fitness & fat loss system</p>
   </div>
 
-  <input id="userInput" placeholder="Type your goal..." style="width:100%;padding:10px;border:none;border-radius:8px">
+  <div class="card">
+    <h3>💼 Elite NG</h3>
+    <p>High-performance coaching</p>
+  </div>
 
-  <button onclick="sendMessage()" style="margin-top:10px;width:100%;padding:12px;background:gold;border:none;font-weight:bold">
+</div>
+
+<!-- 🤖 AI COACH B2K -->
+<div style="max-width:700px;margin:40px auto;padding:20px;background:#111;border-radius:15px">
+
+  <h2 style="text-align:center;color:gold">🤖 coachB2K AI Coach</h2>
+
+  <div id="chatBox" style="height:220px;overflow:auto;background:#000;padding:10px;border-radius:10px;margin-bottom:10px">
+    <p><b>coachB2K:</b> 👋 Welcome. Tell me your goal (fat loss, muscle gain, martial fitness).</p>
+  </div>
+
+  <input 
+    id="userInput" 
+    placeholder="Type your goal..." 
+    style="width:100%;padding:12px;border:none;border-radius:8px"
+  >
+
+  <button 
+    onclick="sendMessage()" 
+    style="margin-top:10px;width:100%;padding:14px;background:gold;border:none;font-weight:bold;border-radius:10px"
+  >
     Send
   </button>
 
 </div>
-</section>
 
-<section class="cta">
-  <h2>🔥 Limited Time Offer</h2>
-  <p>Full Martial X access for only ₦1,000 (Launch Campaign)</p>
-
-  <button onclick="openPaystack()" class="btn">
-    Pay & Start Training
-  </button>
-</section>
-
-<footer>
-  Coach Buchi | Abia State Sports Council Licensed Instructor
-</footer>
-
-<script src="script.js"></script>
+<!-- SCRIPT -->
+<script src="/script.js"></script>
 
 </body>
 </html>
