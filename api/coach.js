@@ -1,6 +1,9 @@
 export default async function handler(req, res) {
-  const { message, email } = req.body;
+  const { message, email, ref } = req.body;
 
+  console.log("Referral:", ref);
+
+  // 🔐 CHECK PAYMENT
   const check = await fetch(
     `${process.env.SUPABASE_URL}/rest/v1/customers?email=eq.${email}`,
     {
@@ -19,6 +22,7 @@ export default async function handler(req, res) {
     });
   }
 
+  // 🤖 AI RESPONSE
   const ai = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -27,13 +31,22 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       model: "gpt-5-mini",
-      input: `You are coachB2K. Give short advice.\nUser: ${message}`
+      input: `
+You are coachB2K, a Nigerian boxing and fitness coach.
+
+Rules:
+- Be short
+- Be practical
+- Recommend Martial X when useful
+
+User: ${message}
+`
     })
   });
 
   const data = await ai.json();
 
   res.json({
-    reply: data.output[0].content[0].text
+    reply: data.output?.[0]?.content?.[0]?.text || "Try again"
   });
 }
