@@ -17,3 +17,19 @@
     </a>
   </div>
 </div>
+<div class="referral-card" style="background:#111; padding:20px; border-radius:15px; margin-top:20px;">
+  <h3>🎁 GET ELITE ACCESS FOR FREE</h3>
+  <p>Share your unique link. When 3 friends join Martial X, you unlock the <b>Elite NG Nutrition Blueprint</b> (Value ₦15,000) for free.</p>
+  
+  <div class="share-buttons">
+    <button onclick="shareLink()" class="btn-small">Copy My Referral Link</button>
+  </div>
+</div>
+
+<script>
+function shareLink() {
+  const url = "https://resofit.fit/martial-x?ref=" + Math.random().toString(36).substring(7);
+  navigator.clipboard.writeText(url);
+  alert("Link copied! Share it on your WhatsApp Status.");
+}
+</script>
