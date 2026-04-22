@@ -15,6 +15,10 @@ export default async function handler(req, res) {
   if (event.event === "charge.success") {
     const data = event.data;
 
+    const ref = data.metadata?.ref || "direct";
+
+    console.log("Referral:", ref);
+
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/customers`, {
       method: "POST",
       headers: {
@@ -25,7 +29,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         email: data.customer.email,
         amount: data.amount / 100,
-        reference: data.reference
+        reference: data.reference,
+        ref: ref
       })
     });
   }
