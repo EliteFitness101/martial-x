@@ -1,5 +1,4 @@
 {
-  "routes": [
-    { "src": "/martial-x", "dest": "/index.html" }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": true
 }
