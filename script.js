@@ -14,6 +14,7 @@ async function sendMessage() {
 
   chatBox.innerHTML += `<p><b>You:</b> ${input}</p>`;
 
+  // 🔒 Lock after 2 messages
   if (messageCount > 2) {
     chatBox.innerHTML += `
       <p style="color:gold">🔒 Unlock full AI for ₦1,000</p>
@@ -24,14 +25,19 @@ async function sendMessage() {
 
   chatBox.innerHTML += `<p id="typing">coachB2K typing...</p>`;
 
-  const res = await fetch("/api/coach", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ message: input, email })
-  });
+  try {
+    const res = await fetch("/api/coach", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ message: input, email })
+    });
 
-  const data = await res.json();
-  document.getElementById("typing").remove();
+    const data = await res.json();
+    document.getElementById("typing").remove();
 
-  chatBox.innerHTML += `<p><b>coachB2K:</b> ${data.reply}</p>`;
+    chatBox.innerHTML += `<p><b>coachB2K:</b> ${data.reply}</p>`;
+  } catch {
+    document.getElementById("typing").remove();
+    chatBox.innerHTML += `<p style="color:red;">Network error</p>`;
+  }
 }
