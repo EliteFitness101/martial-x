@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
   const { message, email } = req.body;
 
-  // Check payment in Supabase
   const check = await fetch(
     `${process.env.SUPABASE_URL}/rest/v1/customers?email=eq.${email}`,
     {
@@ -15,12 +14,11 @@ export default async function handler(req, res) {
   const users = await check.json();
 
   if (!users.length) {
-    return res.status(403).json({
-      reply: "🔒 Pay ₦1,000 to unlock AI coaching"
+    return res.json({
+      reply: "🔒 Pay ₦1,000 to unlock full AI coaching"
     });
   }
 
-  // Call OpenAI
   const ai = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -29,7 +27,7 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       model: "gpt-5-mini",
-      input: `You are coachB2K. Give short fitness advice.\nUser: ${message}`
+      input: `You are coachB2K. Give short advice.\nUser: ${message}`
     })
   });
 
