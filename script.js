@@ -1,3 +1,12 @@
+// =============================
+// 🔗 REFERRAL TRACKING
+// =============================
+const urlParams = new URLSearchParams(window.location.search);
+const ref = urlParams.get("ref") || "direct";
+
+// =============================
+// 🤖 AI SYSTEM
+// =============================
 let messageCount = 0;
 
 async function sendMessage() {
@@ -14,11 +23,15 @@ async function sendMessage() {
 
   chatBox.innerHTML += `<p><b>You:</b> ${input}</p>`;
 
-  // 🔒 Lock after 2 messages
+  // 🔒 LOCK AFTER 2 MESSAGES
   if (messageCount > 2) {
     chatBox.innerHTML += `
-      <p style="color:gold">🔒 Unlock full AI for ₦1,000</p>
-      <a href="https://paystack.com/buy/martial-x">👉 Pay Now</a>
+      <p style="color:gold">
+        🔥 You’re 1 step away from your transformation
+      </p>
+      <a href="https://paystack.com/buy/martial-x">
+        👉 Unlock Full Program – ₦1,000
+      </a>
     `;
     return;
   }
@@ -28,16 +41,26 @@ async function sendMessage() {
   try {
     const res = await fetch("/api/coach", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ message: input, email })
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: input,
+        email: email,
+        ref: ref
+      })
     });
 
     const data = await res.json();
+
     document.getElementById("typing").remove();
 
     chatBox.innerHTML += `<p><b>coachB2K:</b> ${data.reply}</p>`;
-  } catch {
+
+  } catch (error) {
     document.getElementById("typing").remove();
     chatBox.innerHTML += `<p style="color:red;">Network error</p>`;
   }
+
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
