@@ -1,73 +1,18 @@
-<div class="success-container">
-  <h1>YOU'RE IN! 🥊</h1>
-  <p>Your Martial X download link has been sent to your email.</p>
+<!doctype html>
+<html>
+<body style="text-align:center;background:black;color:white">
 
-  <div class="upsell-box" style="border: 2px solid gold; padding: 20px; margin-top: 30px;">
-    <h2>WAIT! ONE LAST STEP...</h2>
-    <p>90% of people quit fitness within 2 weeks. Elite NG Coaching ensures you are the 10% who finish.</p>
-    
-    <ul style="text-align: left; display: inline-block;">
-      <li>✅ 1-on-1 WhatsApp Access</li>
-      <li>✅ Custom Meal Plan Adjustments</li>
-      <li>✅ Weekly Progress Audits</li>
-    </ul>
+<h1>✅ Payment Successful</h1>
 
-    <a class="btn" href="https://wa.me/234XXXXXXXXXX?text=I%20just%20joined%20Martial%20X.%20I%20want%20to%20apply%20for%20Elite%20NG%20Coaching.">
-      Apply for Elite NG Coaching
-    </a>
-  </div>
-</div>
-<div class="referral-card" style="background:#111; padding:20px; border-radius:15px; margin-top:20px;">
-  <h3>🎁 GET ELITE ACCESS FOR FREE</h3>
-  <p>Share your unique link. When 3 friends join Martial X, you unlock the <b>Elite NG Nutrition Blueprint</b> (Value ₦15,000) for free.</p>
-  <div class="delivery-zone" style="text-align:center; padding:40px;">
-  <h2 style="color:#00ff88;">PAYMENT VERIFIED ✅</h2>
-  <p>Your 90-Day Reset Blueprint is ready below.</p>
-
-  <div id="download-box" style="margin: 30px 0;">
-    <a href="/assets/blueprints/ResoFlex-Reset-v1.pdf" 
-       download 
-       class="btn" 
-       onclick="startUpsellTimer()"
-       style="background:white; color:black; padding:20px 40px; font-weight:bold; border-radius:50px;">
-       ⬇️ DOWNLOAD BLUEPRINT (PDF)
-    </a>
-  </div>
-
-  <p id="timer-text" style="color:#888; font-size:0.9rem;">
-    Link expires in <span id="timer">60</span>s. Save it to your device now.
-  </p>
-</div>
-
-<script>
-let seconds = 60;
-function startUpsellTimer() {
-  // Logic to show the Elite NG offer prominently after they click download
-  document.getElementById('elite-upsell').scrollIntoView({behavior: 'smooth'});
-}
-
-const interval = setInterval(() => {
-  seconds--;
-  document.getElementById('timer').innerText = seconds;
-  if (seconds <= 0) {
-    clearInterval(interval);
-    document.getElementById('download-box').innerHTML = "<p style='color:red;'>Link expired. Check your email for a permanent copy.</p>";
-  }
-}, 1000);
-</script>
-
-  <div class="share-buttons">
-    <button onclick="shareLink()" class="btn-small">Copy My Referral Link</button>
-  </div>
-</div>
-<a href="/assets/Martial-X-Blueprint.pdf" download class="btn" style="background: #25D366;">
-  📥 DOWNLOAD MARTIAL-X PDF
+<a href="/docs/ResoFit_N1000_Reset.pdf">
+Download Plan
 </a>
 
-<script>
-function shareLink() {
-  const url = "https://resofit.fit/martial-x?ref=" + Math.random().toString(36).substring(7);
-  navigator.clipboard.writeText(url);
-  alert("Link copied! Share it on your WhatsApp Status.");
-}
-</script>
+<br><br>
+
+<a href="https://wa.me/234XXXXXXXXXX">
+Join WhatsApp
+</a>
+
+</body>
+</html>
