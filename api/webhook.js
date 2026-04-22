@@ -1,58 +1,62 @@
 import crypto from "crypto";
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
   try {
-    // 🔐 Verify Paystack signature
+    // Verify Paystack
     const hash = crypto
       .createHmac("sha512", process.env.PAYSTACK_SECRET)
       .update(JSON.stringify(req.body))
       .digest("hex");
 
-    const signature = req.headers["x-paystack-signature"];
-
-    if (hash !== signature) {
-      console.error("❌ Invalid Paystack signature");
+    if (hash !== req.headers["x-paystack-signature"]) {
       return res.status(401).send("Invalid signature");
     }
 
-    // ✅ Event data
     const event = req.body;
 
-    // 🎯 Handle successful payment
     if (event.event === "charge.success") {
-
       const data = event.data;
 
       const email = data.customer.email;
       const amount = data.amount / 100;
       const reference = data.reference;
 
-      console.log("✅ Payment Verified");
-      console.log("Email:", email);
-      console.log("Amount:", amount);
-      console.log("Reference:", reference);
+      console.log("✅ Payment:", email);
 
-      // ============================
-      // 🚀 FUTURE AUTOMATIONS
-      // ============================
+      // =========================
+      // SAVE TO SUPABASE
+      // =========================
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/customers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": process.env.SUPABASE_KEY,
+          "Authorization": `Bearer ${process.env.SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          email,
+          amount,
+          reference
+        })
+      });
 
-      // 👉 1. Save to database (Supabase)
-      // 👉 2. Send WhatsApp message
-      // 👉 3. Unlock AI access
-      // 👉 4. Trigger email delivery
+      // =========================
+      // WHATSAPP MESSAGE
+      // =========================
+      console.log("📲 Send WhatsApp to:", email);
+
+      // (we’ll automate this next)
 
     }
 
-    // Always respond OK
     return res.status(200).send("OK");
 
   } catch (error) {
-    console.error("🔥 Webhook Error:", error);
-    return res.status(500).send("Server Error");
+    console.error(error);
+    return res.status(500).send("Error");
   }
 }
