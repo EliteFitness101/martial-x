@@ -31,3 +31,21 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "Server error" });
   }
 }
+// Track usage in the browser
+let chatHistory = JSON.parse(localStorage.getItem('coach_sessions')) || 0;
+
+function checkAccess() {
+  if (chatHistory >= 2) {
+    // Trigger the Paywall UI
+    document.getElementById('chat-input').disabled = true;
+    document.getElementById('paywall-overlay').style.display = 'block';
+  }
+}
+
+// Call this every time the user sends a message
+function incrementChat() {
+  chatHistory++;
+  localStorage.setItem('coach_sessions', chatHistory);
+  checkAccess();
+}
+
