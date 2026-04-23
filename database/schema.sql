@@ -48,3 +48,10 @@ create table payments (
   status text,
   created_at timestamp default now()
 );
+create table memory (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid,
+  input text,
+  output text,
+  created_at timestamp default now()
+);
