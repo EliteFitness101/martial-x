@@ -1,20 +1,27 @@
 import { createToken } from "@/lib/auth";
+import { createUser, getUserByEmail } from "@/lib/db";
 import { cookies } from "next/headers";
 
 export async function POST(req) {
-  const body = await req.json();
+  const { email } = await req.json();
 
-  // ⚠️ Replace with DB check (Supabase later)
-  const user = {
-    id: "user_123",
-    role: "user",
-    subscription: "free",
-    email: body.email,
-  };
+  // 🧠 1. CHECK USER
+  let user = await getUserByEmail(email);
 
+  // 🧠 2. CREATE IF NOT EXISTS
+  if (!user) {
+    user = await createUser({
+      id: crypto.randomUUID(),
+      email,
+      role: "user",
+      subscription: "free",
+    });
+  }
+
+  // 🔐 3. CREATE JWT
   const token = await createToken(user);
 
-  // 🍪 STORE SECURE COOKIE (NOT localStorage)
+  // 🍪 4. STORE COOKIE
   cookies().set("token", token, {
     httpOnly: true,
     secure: true,
@@ -22,8 +29,5 @@ export async function POST(req) {
     path: "/",
   });
 
-  return Response.json({
-    success: true,
-    user,
-  });
+  return Response.json({ user });
 }
