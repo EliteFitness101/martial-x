@@ -6,18 +6,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body style="background:black;color:white;font-family:sans-serif">
 
-<nav>
-  <a href="/">Home</a>
-  <a href="/martial-x/">Martial X</a>
-  <a href="/elite-ng/">Elite NG</a>
+<nav style="padding:10px;text-align:center">
+  <a href="/" style="margin:10px;color:white">Home</a>
+  <a href="/martial-x/" style="margin:10px;color:white">Martial X</a>
+  <a href="/elite-ng/" style="margin:10px;color:white">Elite NG</a>
 </nav>
 
-<div class="hero">
-  <h1>RESOFIT</h1>
+<div class="hero" style="text-align:center;padding:40px">
+  <h1 style="font-size:40px">RESOFIT</h1>
   <p>Fitness • Combat • Transformation</p>
-  <a class="btn" href="/martial-x/">Start Martial X – ₦1,000</a>
+  <a class="btn" href="/martial-x/" style="background:red;padding:12px 20px;border-radius:10px;color:white">
+    Start Martial X – ₦1,000
+  </a>
 </div>
 
 <div style="max-width:700px;margin:30px auto;padding:20px;background:#111;border-radius:15px">
@@ -28,14 +30,16 @@
   <input id="emailInput" placeholder="Enter your email"
     style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
 
-  <div id="chatBox" style="height:220px;overflow:auto;background:#000;padding:10px;border-radius:10px">
-    <p><b>ChatB2K:</b> Tell me your goal...</p>
+  <div id="chatBox" style="height:250px;overflow:auto;background:#000;padding:10px;border-radius:10px">
+    <p><b>ChatB2K:</b> Welcome. Tell me your goal.</p>
   </div>
 
   <input id="userInput" placeholder="Type message..."
     style="width:100%;padding:12px;margin-top:10px;border-radius:8px">
 
-  <button onclick="sendMessage()" class="btn">Send</button>
+  <button onclick="sendMessage()" style="margin-top:10px;width:100%;padding:12px;background:gold;border:none;border-radius:10px">
+    Send
+  </button>
 
 </div>
 
