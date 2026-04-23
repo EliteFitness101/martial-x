@@ -19,9 +19,12 @@ const PUBLIC_ROUTES = [
   "/favicon.ico",
 ];
 
-// 🧠 GLOBAL CLOUD MEMORY (replace with Redis in production)
-const cloudIPReputation = new Map();   // ip → reputation score
-const userBehaviorDB = new Map();      // userId → behavior profile
+// 🧠 GLOBAL AGI MEMORY LAYER (replace with Redis + DB in prod)
+const globalBrain = {
+  ipMemory: new Map(),        // IP → behavior history
+  userMemory: new Map(),      // user → evolving profile
+  attackPatterns: new Map(),  // pattern → frequency
+};
 
 // 🔐 VERIFY TOKEN
 async function verify(token) {
@@ -33,60 +36,68 @@ async function verify(token) {
   }
 }
 
-// 🌍 GLOBAL IP REPUTATION ENGINE (self-learning)
-function getIPReputation(ip) {
-  const current = cloudIPReputation.get(ip) || {
-    score: 50,
+// 🧠 AGI PATTERN DETECTOR
+function detectPatterns(ip, userId, ua) {
+  const key = `${ip}-${userId}`;
+
+  const record = globalBrain.ipMemory.get(key) || {
     hits: 0,
+    suspicious: 0,
+    lastSeen: Date.now(),
   };
 
-  current.hits += 1;
+  record.hits++;
 
-  // learn from traffic patterns
-  if (current.hits > 100) current.score -= 20;
-  if (current.hits > 200) current.score -= 40;
+  // pattern learning
+  if (record.hits % 20 === 0) record.suspicious++;
 
-  cloudIPReputation.set(ip, current);
+  globalBrain.ipMemory.set(key, record);
 
-  return current.score;
+  return record;
 }
 
-// 🧠 USER BEHAVIOR AI ENGINE (adaptive memory)
-function analyzeUser(user, req) {
+// 🌍 AGI RISK MODEL (self-adjusting weights)
+function computeAGIRisk(user, req, pattern) {
+  let risk = 0;
+
   const ua = req.headers.get("user-agent") || "";
   const parser = new UAParser(ua);
   const device = parser.getDevice().type || "desktop";
 
-  const prev = userBehaviorDB.get(user.id) || {
-    risk: 0,
-    logins: 0,
-    anomalies: 0,
-  };
-
-  let risk = 0;
-
+  // base anomaly signals
   if (!ua) risk += 20;
-  if (device === "unknown") risk += 15;
+  if (device === "unknown") risk += 25;
   if (!user?.id) risk += 50;
 
-  prev.logins += 1;
-  prev.risk = Math.min(100, prev.risk + risk);
+  // pattern intelligence
+  if (pattern.hits > 50) risk += 30;
+  if (pattern.suspicious > 3) risk += 40;
 
-  if (risk > 30) prev.anomalies += 1;
-
-  userBehaviorDB.set(user.id, prev);
-
-  return prev;
+  return risk;
 }
 
-// 💰 REVENUE FIREWALL (protect paid endpoints)
-function revenueFirewall(user, pathname) {
+// 🧠 SELF-ADJUSTING SECURITY THRESHOLDS
+function adaptiveThreshold(globalStats) {
+  const base = 100;
+
+  // system becomes stricter under attack load
+  if (globalStats.attackPressure > 1000) return base - 30;
+  if (globalStats.attackPressure > 500) return base - 15;
+
+  return base;
+}
+
+// 💰 REVENUE-AWARE PROTECTION LAYER
+function revenueAI(user, pathname, risk) {
   if (pathname.startsWith("/api/coach")) {
-    if (user.subscription === "free") {
-      return "BLOCK";
+    if (user.subscription === "free") return "BLOCK";
+
+    // protect elite users from false positives
+    if (user.subscription === "elite" && risk < 60) {
+      return "ALLOW";
     }
 
-    if (user.subscription === "elite" && userBehaviorDB.get(user.id)?.anomalies > 5) {
+    if (risk > 80 && user.subscription === "elite") {
       return "LIMIT";
     }
   }
@@ -94,24 +105,31 @@ function revenueFirewall(user, pathname) {
   return "ALLOW";
 }
 
-// 🧠 AI DECISION ENGINE (self-adjusting trust system)
-function decisionEngine(ipScore, userProfile) {
-  const totalRisk = (100 - ipScore) + (userProfile.risk || 0);
+// 🧠 AGI DECISION ENGINE
+function agiDecision(risk, threshold, pattern) {
+  // predictive blocking (before threshold hit)
+  if (pattern.hits > 80 && risk > 60) return "BLOCK";
 
-  if (totalRisk > 120) return "BLOCK";
-  if (totalRisk > 80) return "QUARANTINE";
-  if (totalRisk > 50) return "LIMIT";
+  if (risk > threshold) return "BLOCK";
+  if (risk > threshold * 0.7) return "QUARANTINE";
+  if (risk > threshold * 0.5) return "LIMIT";
 
   return "ALLOW";
 }
 
-// 🔁 SELF-HEALING SYSTEM (trust decay over time)
-function decaySystem(userId) {
-  const profile = userBehaviorDB.get(userId);
-  if (!profile) return;
+// 🔁 SYSTEM SELF-LEARNING UPDATE
+function updateBrain(ip, userId, risk) {
+  const key = `${ip}-${userId}`;
 
-  profile.risk = Math.max(0, profile.risk - 0.5); // gradual healing
-  userBehaviorDB.set(userId, profile);
+  const prev = globalBrain.userMemory.get(userId) || {
+    avgRisk: 0,
+    sessions: 0,
+  };
+
+  prev.avgRisk = (prev.avgRisk + risk) / 2;
+  prev.sessions += 1;
+
+  globalBrain.userMemory.set(userId, prev);
 }
 
 export async function middleware(req) {
@@ -138,17 +156,27 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const userProfile = analyzeUser(user, req);
-  const ipScore = getIPReputation(ip);
+  // 🧠 PATTERN ANALYSIS
+  const pattern = detectPatterns(ip, user.id, req.headers.get("user-agent"));
 
-  // 🔁 self-healing decay
-  decaySystem(user.id);
+  // 🧠 RISK COMPUTATION
+  const risk = computeAGIRisk(user, req, pattern);
 
-  // 🧠 FINAL AI DECISION
-  const decision = decisionEngine(ipScore, userProfile);
+  // 🔁 UPDATE LEARNING SYSTEM
+  updateBrain(ip, user.id, risk);
 
-  // 💰 REVENUE PROTECTION
-  const revenueDecision = revenueFirewall(user, pathname);
+  // 🌐 SYSTEM LOAD SIMULATION (attack pressure model)
+  const globalStats = {
+    attackPressure: pattern.hits * risk,
+  };
+
+  const threshold = adaptiveThreshold(globalStats);
+
+  // 🧠 AGI DECISION
+  const decision = agiDecision(risk, threshold, pattern);
+
+  // 💰 REVENUE AI OVERRIDE
+  const revenueDecision = revenueAI(user, pathname, risk);
 
   if (revenueDecision === "BLOCK") {
     return NextResponse.redirect(new URL("/pricing", req.url));
@@ -156,31 +184,33 @@ export async function middleware(req) {
 
   if (revenueDecision === "LIMIT") {
     return new NextResponse(
-      JSON.stringify({ error: "Revenue protection active" }),
+      JSON.stringify({
+        error: "Revenue protection: temporary limit applied",
+      }),
       { status: 429 }
     );
   }
 
-  // 🚫 GLOBAL BLOCK
+  // 🚫 BLOCK
   if (decision === "BLOCK") {
-    return new NextResponse("🚫 Access denied by AI Security Layer", {
+    return new NextResponse("🚫 AI Security System Blocked Request", {
       status: 403,
     });
   }
 
-  // ⚠️ QUARANTINE MODE
+  // ⚠️ QUARANTINE
   if (decision === "QUARANTINE") {
     return NextResponse.redirect(
       new URL("/login?security=quarantine", req.url)
     );
   }
 
-  // 🔐 ADMIN
+  // 🔐 ADMIN CONTROL
   if (pathname.startsWith("/admin") && user.role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 💎 ELITE ACCESS
+  // 💎 ELITE CONTROL
   if (pathname.startsWith("/elite")) {
     if (!["elite", "admin"].includes(user.role)) {
       return NextResponse.redirect(new URL("/pricing", req.url));
@@ -190,7 +220,7 @@ export async function middleware(req) {
   return NextResponse.next();
 }
 
-// ⚡ GLOBAL MATCHER
+// ⚡ MATCH ALL NON-STATIC ROUTES
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico).*)",
