@@ -7,7 +7,7 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-secret"
 );
 
-// 🌍 PUBLIC ROUTES
+// 🌐 PUBLIC ROUTES
 const PUBLIC_ROUTES = [
   "/",
   "/pricing",
@@ -19,10 +19,9 @@ const PUBLIC_ROUTES = [
   "/favicon.ico",
 ];
 
-// 🌐 GLOBAL NETWORK STATE (replace with Redis in production)
-const globalIPMap = new Map();       // ip → request volume
-const userTrustMap = new Map();      // userId → trust score
-const billingAbuseMap = new Map();   // userId → abuse score
+// 🧠 GLOBAL CLOUD MEMORY (replace with Redis in production)
+const cloudIPReputation = new Map();   // ip → reputation score
+const userBehaviorDB = new Map();      // userId → behavior profile
 
 // 🔐 VERIFY TOKEN
 async function verify(token) {
@@ -34,65 +33,91 @@ async function verify(token) {
   }
 }
 
-// 🌐 GLOBAL IP RISK ENGINE
-function computeIPRisk(ip) {
-  const count = globalIPMap.get(ip) || 0;
-  globalIPMap.set(ip, count + 1);
+// 🌍 GLOBAL IP REPUTATION ENGINE (self-learning)
+function getIPReputation(ip) {
+  const current = cloudIPReputation.get(ip) || {
+    score: 50,
+    hits: 0,
+  };
 
-  if (count > 100) return 60;
-  if (count > 50) return 40;
-  if (count > 20) return 20;
+  current.hits += 1;
 
-  return 5;
+  // learn from traffic patterns
+  if (current.hits > 100) current.score -= 20;
+  if (current.hits > 200) current.score -= 40;
+
+  cloudIPReputation.set(ip, current);
+
+  return current.score;
 }
 
-// 🧠 USER BEHAVIOR RISK ENGINE
-function computeUserRisk(user, req) {
-  let score = 0;
-
+// 🧠 USER BEHAVIOR AI ENGINE (adaptive memory)
+function analyzeUser(user, req) {
   const ua = req.headers.get("user-agent") || "";
   const parser = new UAParser(ua);
   const device = parser.getDevice().type || "desktop";
 
-  if (!user?.id) score += 60;
-  if (!ua) score += 25;
-  if (device === "unknown") score += 20;
+  const prev = userBehaviorDB.get(user.id) || {
+    risk: 0,
+    logins: 0,
+    anomalies: 0,
+  };
 
-  return score;
+  let risk = 0;
+
+  if (!ua) risk += 20;
+  if (device === "unknown") risk += 15;
+  if (!user?.id) risk += 50;
+
+  prev.logins += 1;
+  prev.risk = Math.min(100, prev.risk + risk);
+
+  if (risk > 30) prev.anomalies += 1;
+
+  userBehaviorDB.set(user.id, prev);
+
+  return prev;
 }
 
-// 💳 BILLING ABUSE DETECTOR (REVENUE FIREWALL)
-function detectBillingAbuse(userId, pathname) {
-  let abuse = billingAbuseMap.get(userId) || 0;
-
-  // simulate API abuse pattern
+// 💰 REVENUE FIREWALL (protect paid endpoints)
+function revenueFirewall(user, pathname) {
   if (pathname.startsWith("/api/coach")) {
-    abuse += 10;
+    if (user.subscription === "free") {
+      return "BLOCK";
+    }
+
+    if (user.subscription === "elite" && userBehaviorDB.get(user.id)?.anomalies > 5) {
+      return "LIMIT";
+    }
   }
 
-  billingAbuseMap.set(userId, abuse);
-
-  return abuse;
-}
-
-// 🧠 TRUST SCORE ENGINE (GLOBAL DECISION CORE)
-function computeTrustScore(ipRisk, userRisk, billingRisk) {
-  const score = 100 - (ipRisk + userRisk + billingRisk);
-  return Math.max(0, score);
-}
-
-// ⚡ ACTION ENGINE
-function decideAction(trustScore) {
-  if (trustScore < 20) return "BLOCK";
-  if (trustScore < 40) return "QUARANTINE";
-  if (trustScore < 70) return "LIMIT";
   return "ALLOW";
+}
+
+// 🧠 AI DECISION ENGINE (self-adjusting trust system)
+function decisionEngine(ipScore, userProfile) {
+  const totalRisk = (100 - ipScore) + (userProfile.risk || 0);
+
+  if (totalRisk > 120) return "BLOCK";
+  if (totalRisk > 80) return "QUARANTINE";
+  if (totalRisk > 50) return "LIMIT";
+
+  return "ALLOW";
+}
+
+// 🔁 SELF-HEALING SYSTEM (trust decay over time)
+function decaySystem(userId) {
+  const profile = userBehaviorDB.get(userId);
+  if (!profile) return;
+
+  profile.risk = Math.max(0, profile.risk - 0.5); // gradual healing
+  userBehaviorDB.set(userId, profile);
 }
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // ✔ Public routes bypass
+  // ✔ PUBLIC ROUTES
   if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.next();
   }
@@ -113,62 +138,51 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const userId = user.id;
-  const role = user.role || "user";
-  const plan = user.subscription || "free";
+  const userProfile = analyzeUser(user, req);
+  const ipScore = getIPReputation(ip);
 
-  // 🌍 GLOBAL RISK CALCULATION
-  const ipRisk = computeIPRisk(ip);
-  const userRisk = computeUserRisk(user, req);
-  const billingRisk = detectBillingAbuse(userId, pathname);
+  // 🔁 self-healing decay
+  decaySystem(user.id);
 
-  const trustScore = computeTrustScore(ipRisk, userRisk, billingRisk);
+  // 🧠 FINAL AI DECISION
+  const decision = decisionEngine(ipScore, userProfile);
 
-  userTrustMap.set(userId, trustScore);
+  // 💰 REVENUE PROTECTION
+  const revenueDecision = revenueFirewall(user, pathname);
 
-  const decision = decideAction(trustScore);
+  if (revenueDecision === "BLOCK") {
+    return NextResponse.redirect(new URL("/pricing", req.url));
+  }
 
-  // 🚫 BLOCK (HIGH RISK GLOBAL NETWORK)
+  if (revenueDecision === "LIMIT") {
+    return new NextResponse(
+      JSON.stringify({ error: "Revenue protection active" }),
+      { status: 429 }
+    );
+  }
+
+  // 🚫 GLOBAL BLOCK
   if (decision === "BLOCK") {
-    return new NextResponse("🚫 Access blocked by Global Security Network", {
+    return new NextResponse("🚫 Access denied by AI Security Layer", {
       status: 403,
     });
   }
 
-  // ⚠️ QUARANTINE (restricted environment)
+  // ⚠️ QUARANTINE MODE
   if (decision === "QUARANTINE") {
     return NextResponse.redirect(
       new URL("/login?security=quarantine", req.url)
     );
   }
 
-  // 💳 LIMIT MODE (protect revenue APIs)
-  if (decision === "LIMIT") {
-    if (pathname.startsWith("/api")) {
-      return new NextResponse(
-        JSON.stringify({
-          error: "Rate limited by global security network",
-        }),
-        { status: 429 }
-      );
-    }
-  }
-
-  // 🔐 ADMIN CONTROL
-  if (pathname.startsWith("/admin") && role !== "admin") {
+  // 🔐 ADMIN
+  if (pathname.startsWith("/admin") && user.role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 💎 ELITE ACCESS CONTROL
+  // 💎 ELITE ACCESS
   if (pathname.startsWith("/elite")) {
-    if (!["elite", "admin"].includes(role)) {
-      return NextResponse.redirect(new URL("/pricing", req.url));
-    }
-  }
-
-  // 💳 COACH API PROTECTION
-  if (pathname.startsWith("/api/coach")) {
-    if (plan === "free") {
+    if (!["elite", "admin"].includes(user.role)) {
       return NextResponse.redirect(new URL("/pricing", req.url));
     }
   }
