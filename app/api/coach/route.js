@@ -1,7 +1,14 @@
-export async function POST(req) {
+import { success } from "@/lib/apiResponse";
+import { apiHandler } from "@/lib/apiHandler";
+import { generateCoachResponse } from "@/services/coachService";
+
+export const POST = apiHandler(async (req) => {
   const body = await req.json();
 
-  return Response.json({
-    reply: "Coach: " + body.message,
+  const reply = await generateCoachResponse({
+    user: body.user,
+    message: body.message,
   });
-}
+
+  return success({ reply }, "coach response generated");
+});
