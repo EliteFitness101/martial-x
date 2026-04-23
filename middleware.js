@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 
 export function middleware(req) {
-  const token = req.cookies.get("token")?.value;
+  const role = req.cookies.get("role")?.value;
   const path = req.nextUrl.pathname;
 
-  const isAppRoute = path.startsWith("/dashboard") || path.startsWith("/coach");
+  const isAdminRoute = path.startsWith("/admin");
 
-  // Block access to app if not logged in
-  if (isAppRoute && !token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  if (isAdminRoute && role !== "admin") {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/coach/:path*"],
+  matcher: ["/admin/:path*"],
 };
