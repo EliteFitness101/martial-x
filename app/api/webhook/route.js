@@ -1,14 +1,9 @@
-import { NextResponse } from "next/server";
-import { upgradeUser } from "@/services/subscription";
-
 export async function POST(req) {
-  const body = await req.json();
+  const data = await req.json();
 
-  if (body.event === "charge.success") {
-    const email = body.data.customer.email;
-
-    await upgradeUser(email, "elite");
+  if (data.event === "charge.success") {
+    console.log("Upgrade user subscription");
   }
 
-  return NextResponse.json({ ok: true });
+  return Response.json({ ok: true });
 }
