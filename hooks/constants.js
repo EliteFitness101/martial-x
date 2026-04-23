@@ -3,3 +3,8 @@ export const XP_RULES = {
   LOGIN: 10,
   WORKOUT: 50,
 };
+
+export const SUBSCRIPTION = {
+  FREE: "free",
+  ELITE: "elite",
+};
