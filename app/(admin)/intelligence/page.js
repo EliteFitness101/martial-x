@@ -1,14 +1,10 @@
-export default function Intelligence() {
+export default function IntelligencePage() {
   return (
-    <div>
-      <h1>🧠 SaaS Intelligence Layer</h1>
-
-      <div>
-        <p>• User Behavior Tracking: ACTIVE</p>
-        <p>• AI Memory System: ACTIVE</p>
-        <p>• Subscription Monitoring: ACTIVE</p>
-        <p>• XP Growth Engine: ACTIVE</p>
-      </div>
+    <div style={{ padding: 20 }}>
+      <h1>🧠 Intelligence Layer</h1>
+      <p>AI memory system: ACTIVE</p>
+      <p>Behavior tracking: ACTIVE</p>
+      <p>Subscription engine: ACTIVE</p>
     </div>
   );
 }
