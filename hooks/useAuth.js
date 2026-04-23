@@ -1,17 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export function useAuth() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    async function fetchUser() {
-      const res = await fetch("/api/user");
-      const data = await res.json();
-      setUser(data.user);
-    }
-
-    fetchUser();
-  }, []);
+  const [user] = useState({
+    id: "demo",
+    name: "User",
+  });
 
   return { user };
 }
