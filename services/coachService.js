@@ -1,25 +1,41 @@
-import { COACH_PERSONALITIES } from "@/lib/constants";
+import { getMemory, saveMemory } from "./memoryService";
 
-export function buildCoachPrompt({ personality, user }) {
-  const baseContext = `
-You are an elite AI fitness coach inside a SaaS platform.
+export async function generateCoachResponse({
+  user,
+  message,
+  openai,
+}) {
+  const memory = await getMemory(user.id);
 
-User:
-- Name: ${user?.name || "User"}
-- Goal: ${user?.goal || "General Fitness"}
-- Level: ${user?.level || "Beginner"}
-`;
+  const context = memory
+    .map((m) => `User: ${m.input}\nCoach: ${m.output}`)
+    .join("\n");
 
-  const styles = {
-    [COACH_PERSONALITIES.STRICT]:
-      "Be strict, no excuses, discipline-focused.",
-    [COACH_PERSONALITIES.MOTIVATIONAL]:
-      "Be highly motivational, positive energy.",
-    [COACH_PERSONALITIES.MILITARY]:
-      "Be intense, tactical, command-based training style.",
-    [COACH_PERSONALITIES.THERAPEUTIC]:
-      "Be calm, supportive, emotional recovery focused.",
-  };
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `
+You are an autonomous fitness AI coach.
 
-  return `${baseContext}\nStyle: ${styles[personality] || styles.MOTIVATIONAL}`;
+You remember user history:
+${context}
+
+Adapt behavior automatically based on:
+- discipline level
+- consistency
+- emotional tone
+- fitness progress
+        `,
+      },
+      { role: "user", content: message },
+    ],
+  });
+
+  const reply = completion.choices[0].message.content;
+
+  await saveMemory(user.id, message, reply);
+
+  return reply;
 }
