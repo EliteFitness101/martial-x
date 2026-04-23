@@ -1,21 +1,18 @@
 import { supabase } from "@/lib/supabase";
 
-export async function addXP(userId, amount, action) {
-  await supabase.from("xp_logs").insert([
-    { user_id: userId, xp: amount, action },
-  ]);
-
-  const { data: user } = await supabase
+export async function addXP(userId, amount) {
+  const { data } = await supabase
     .from("users")
-    .select("xp, level")
+    .select("xp")
     .eq("id", userId)
     .single();
 
-  const newXP = (user.xp || 0) + amount;
-  const newLevel = Math.floor(newXP / 100);
+  const newXP = (data.xp || 0) + amount;
 
   await supabase
     .from("users")
-    .update({ xp: newXP, level: newLevel })
+    .update({ xp: newXP })
     .eq("id", userId);
+
+  return newXP;
 }
