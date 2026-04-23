@@ -1,8 +1,4 @@
-import { useState } from "react";
-
 export function useCoachChat(user) {
-  const [messages, setMessages] = useState([]);
-
   async function sendMessage(text) {
     const res = await fetch("/api/coach", {
       method: "POST",
@@ -12,12 +8,12 @@ export function useCoachChat(user) {
 
     const data = await res.json();
 
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text },
-      { role: "coach", text: data.reply },
-    ]);
+    if (!data.success) {
+      throw new Error(data.message);
+    }
+
+    return data.data.reply;
   }
 
-  return { messages, sendMessage };
+  return { sendMessage };
 }
