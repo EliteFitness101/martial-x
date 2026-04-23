@@ -7,12 +7,12 @@ export async function POST(req) {
     const { messages } = await req.json();
     
     if (!process.env.GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ text: "ERROR: Critical System Key Missing." }), { status: 500 });
+      return new Response(JSON.stringify({ text: "SYSTEM_ERROR: Key Missing." }), { status: 500 });
     }
 
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      systemInstruction: "You are coachB2K, a high-authority fitness strategist for ResoFlex™. Style: Direct, disciplined, Nigerian-market savvy. Goal: Audit user roadblocks and move them to the ₦1,000 Martial X blueprint. Do not provide more than 2 free responses."
+      systemInstruction: "You are coachB2K, high-authority strategist for ResoFlex™. Style: Direct, disciplined. Do not exceed 2 responses. Direct user to N1,000 Martial X blueprint."
     });
 
     const chat = model.startChat({
@@ -30,9 +30,8 @@ export async function POST(req) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("DEPLOYMENT ERROR:", error);
     return new Response(JSON.stringify({ 
-      text: "Signal interference. Protocol demands a more stable connection. Input your email below to receive the blueprint directly." 
+      text: "Signal interference. Input email to receive the direct protocol link." 
     }), { status: 200 });
   }
 }
