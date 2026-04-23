@@ -1,24 +1,17 @@
 import { supabase } from "@/lib/supabase";
 
-// Save user memory automatically
-export async function saveMemory(userId, message, response) {
+export async function saveMemory(userId, input, output) {
   await supabase.from("memory").insert([
-    {
-      user_id: userId,
-      input: message,
-      output: response,
-    },
+    { user_id: userId, input, output },
   ]);
 }
 
-// Fetch past behavior context
 export async function getMemory(userId) {
   const { data } = await supabase
     .from("memory")
     .select("*")
     .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(20);
+    .order("created_at", { ascending: false });
 
   return data;
 }
