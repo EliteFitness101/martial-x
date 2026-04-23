@@ -1,9 +1,9 @@
-import { XP_RULES } from "@/lib/constants";
-
 export function calculateXP(action) {
-  return XP_RULES[action] || 0;
-}
+  const map = {
+    CHAT: 2,
+    LOGIN: 10,
+    WORKOUT: 50,
+  };
 
-export function levelFromXP(xp) {
-  return Math.floor(xp / 100);
+  return map[action] || 0;
 }
