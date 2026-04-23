@@ -1,13 +1,8 @@
-create table users (
-  id uuid primary key,
-  email text,
-  xp int default 0,
-  level int default 1
-);
-
-create table messages (
-  id uuid primary key,
-  user_id uuid,
-  message text,
-  created_at timestamp default now()
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE,
+  role TEXT DEFAULT 'user',
+  subscription TEXT DEFAULT 'free',
+  paystack_customer_id TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
 );
