@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-secret"
-);
-
-// 🧠 PUBLIC ROUTES (NO AUTH REQUIRED)
+// 🧠 ROUTE GROUPS
 const PUBLIC_ROUTES = [
   "/",
   "/pricing",
@@ -17,64 +13,61 @@ const PUBLIC_ROUTES = [
   "/favicon.ico",
 ];
 
-// 🔐 VERIFY JWT TOKEN
-async function verifyToken(token) {
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-    return payload;
-  } catch (err) {
-    return null;
-  }
-}
+const ADMIN_ROUTES = ["/admin"];
+const ELITE_ROUTES = ["/elite"];
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
   // ✔ Allow public routes
-  const isPublic = PUBLIC_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (isPublic) {
+  if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
-  // 🔐 Get token from headers
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  // 🧠 Supabase session check (REAL AUTH)
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
 
-  if (!token) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // 🚫 No session → redirect
+  if (!session) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 🧠 Verify token
-  const user = await verifyToken(token);
+  const user = session.user;
 
-  if (!user) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  // 🧠 USER METADATA (role + subscription)
+  const role = user?.user_metadata?.role || "user";
+  const plan = user?.user_metadata?.subscription || "free";
 
-  // 🚨 ROLE-BASED ACCESS CONTROL
-  const role = user.role || "user";
-
-  // Admin routes protection
-  if (pathname.startsWith("/admin")) {
+  // 🔐 ADMIN PROTECTION
+  if (ADMIN_ROUTES.some((r) => pathname.startsWith(r))) {
     if (role !== "admin") {
       return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
-  // Elite-only routes (optional SaaS tier gating)
-  if (pathname.startsWith("/elite")) {
-    if (!["elite", "admin"].includes(role)) {
+  // 💎 ELITE ROUTE PROTECTION
+  if (ELITE_ROUTES.some((r) => pathname.startsWith(r))) {
+    if (!["elite", "admin"].includes(role) && plan !== "elite") {
       return NextResponse.redirect(new URL("/pricing", req.url));
     }
   }
 
-  return NextResponse.next();
+  // 🚨 SUBSCRIPTION ENFORCEMENT (API LEVEL CONTROL)
+  if (pathname.startsWith("/api")) {
+    if (pathname.includes("coach") && plan === "free") {
+      return NextResponse.redirect(new URL("/pricing", req.url));
+    }
+  }
+
+  return res;
 }
 
-// ⚡ Apply middleware globally (but skip static assets)
+// ⚡ Match everything except static assets
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico).*)",
