@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { success, error } from "@/lib/apiResponse";
 import { apiHandler } from "@/lib/apiHandler";
+import { logAPI } from "@/lib/logger";
 
 export const POST = apiHandler(async (req) => {
   const rawBody = await req.text();
@@ -12,13 +13,19 @@ export const POST = apiHandler(async (req) => {
     .digest("hex");
 
   if (hash !== signature) {
-    return error("Invalid webhook signature", 401);
+    return error("Invalid signature", 401);
   }
 
   const event = JSON.parse(rawBody);
 
+  logAPI({
+    route: "webhook",
+    status: "success",
+    time: 0,
+  });
+
   if (event.event === "charge.success") {
-    console.log("💰 Payment success:", event.data.customer.email);
+    console.log("💰 PAYMENT SUCCESS:", event.data.customer.email);
   }
 
   return success({}, "webhook processed");
