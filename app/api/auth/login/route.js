@@ -1,9 +1,10 @@
 import { createToken } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export async function POST(req) {
   const body = await req.json();
 
-  // ⚠️ Replace this with DB check (Supabase / Prisma later)
+  // ⚠️ Replace with DB check (Supabase later)
   const user = {
     id: "user_123",
     role: "user",
@@ -13,8 +14,16 @@ export async function POST(req) {
 
   const token = await createToken(user);
 
+  // 🍪 STORE SECURE COOKIE (NOT localStorage)
+  cookies().set("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
   return Response.json({
-    token,
+    success: true,
     user,
   });
 }
