@@ -1,9 +1,11 @@
-export function calculateXP(action) {
-  const map = {
-    CHAT: 2,
-    LOGIN: 10,
-    WORKOUT: 50,
-  };
+import { supabase } from "@/lib/supabase";
 
-  return map[action] || 0;
+export async function getUser(email) {
+  const { data } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .single();
+
+  return data;
 }
