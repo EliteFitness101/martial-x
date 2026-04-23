@@ -2,27 +2,29 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import UAParser from "ua-parser-js";
 
-// 🧠 SECRET KEY
+// 🔐 SECRET
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-secret"
 );
 
-// 🧠 ROUTES
+// 🌍 PUBLIC ROUTES
 const PUBLIC_ROUTES = [
   "/",
   "/pricing",
   "/login",
   "/signup",
-  "/api/coach",
   "/api/webhook",
+  "/api/coach",
   "/_next",
   "/favicon.ico",
 ];
 
-// 🚨 SIMPLE IN-MEMORY RISK MAP (replace with Redis later)
-const ipRiskMap = new Map();
+// 🌐 GLOBAL NETWORK STATE (replace with Redis in production)
+const globalIPMap = new Map();       // ip → request volume
+const userTrustMap = new Map();      // userId → trust score
+const billingAbuseMap = new Map();   // userId → abuse score
 
-// 🧠 VERIFY JWT
+// 🔐 VERIFY TOKEN
 async function verify(token) {
   try {
     const { payload } = await jwtVerify(token, SECRET);
@@ -32,48 +34,72 @@ async function verify(token) {
   }
 }
 
-// 🚨 BASIC ANOMALY SCORING
-function getRiskScore(req, user) {
+// 🌐 GLOBAL IP RISK ENGINE
+function computeIPRisk(ip) {
+  const count = globalIPMap.get(ip) || 0;
+  globalIPMap.set(ip, count + 1);
+
+  if (count > 100) return 60;
+  if (count > 50) return 40;
+  if (count > 20) return 20;
+
+  return 5;
+}
+
+// 🧠 USER BEHAVIOR RISK ENGINE
+function computeUserRisk(user, req) {
   let score = 0;
 
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
   const ua = req.headers.get("user-agent") || "";
   const parser = new UAParser(ua);
   const device = parser.getDevice().type || "desktop";
 
-  // IP behavior tracking
-  const ipCount = ipRiskMap.get(ip) || 0;
-  ipRiskMap.set(ip, ipCount + 1);
-
-  if (ipCount > 50) score += 40; // spam behavior
-
-  // suspicious device mismatch
+  if (!user?.id) score += 60;
+  if (!ua) score += 25;
   if (device === "unknown") score += 20;
-
-  // missing user agent
-  if (!ua) score += 30;
-
-  // no session history indicator
-  if (!user?.id) score += 50;
 
   return score;
 }
 
-// 🧠 DECISION ENGINE
-function decide(score) {
-  if (score > 80) return "BLOCK";
-  if (score > 50) return "CHALLENGE";
+// 💳 BILLING ABUSE DETECTOR (REVENUE FIREWALL)
+function detectBillingAbuse(userId, pathname) {
+  let abuse = billingAbuseMap.get(userId) || 0;
+
+  // simulate API abuse pattern
+  if (pathname.startsWith("/api/coach")) {
+    abuse += 10;
+  }
+
+  billingAbuseMap.set(userId, abuse);
+
+  return abuse;
+}
+
+// 🧠 TRUST SCORE ENGINE (GLOBAL DECISION CORE)
+function computeTrustScore(ipRisk, userRisk, billingRisk) {
+  const score = 100 - (ipRisk + userRisk + billingRisk);
+  return Math.max(0, score);
+}
+
+// ⚡ ACTION ENGINE
+function decideAction(trustScore) {
+  if (trustScore < 20) return "BLOCK";
+  if (trustScore < 40) return "QUARANTINE";
+  if (trustScore < 70) return "LIMIT";
   return "ALLOW";
 }
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // ✔ PUBLIC ROUTES
+  // ✔ Public routes bypass
   if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
+  const ip = req.headers.get("x-forwarded-for") || "unknown";
+
+  // 🔐 AUTH
   const auth = req.headers.get("authorization");
   const token = auth?.replace("Bearer ", "");
 
@@ -81,46 +107,66 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 🔐 VERIFY USER
   const user = await verify(token);
 
   if (!user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 🧠 RISK ANALYSIS
-  const riskScore = getRiskScore(req, user);
-  const decision = decide(riskScore);
+  const userId = user.id;
+  const role = user.role || "user";
+  const plan = user.subscription || "free";
 
-  // 🚫 BLOCK HIGH RISK
+  // 🌍 GLOBAL RISK CALCULATION
+  const ipRisk = computeIPRisk(ip);
+  const userRisk = computeUserRisk(user, req);
+  const billingRisk = detectBillingAbuse(userId, pathname);
+
+  const trustScore = computeTrustScore(ipRisk, userRisk, billingRisk);
+
+  userTrustMap.set(userId, trustScore);
+
+  const decision = decideAction(trustScore);
+
+  // 🚫 BLOCK (HIGH RISK GLOBAL NETWORK)
   if (decision === "BLOCK") {
-    return new NextResponse("Access Denied (Security Risk Detected)", {
+    return new NextResponse("🚫 Access blocked by Global Security Network", {
       status: 403,
     });
   }
 
-  // ⚠️ CHALLENGE (soft block → redirect)
-  if (decision === "CHALLENGE") {
-    return NextResponse.redirect(new URL("/login?challenge=1", req.url));
+  // ⚠️ QUARANTINE (restricted environment)
+  if (decision === "QUARANTINE") {
+    return NextResponse.redirect(
+      new URL("/login?security=quarantine", req.url)
+    );
   }
 
-  // 🧠 ROLE SYSTEM
-  const role = user.role || "user";
-  const plan = user.subscription || "free";
+  // 💳 LIMIT MODE (protect revenue APIs)
+  if (decision === "LIMIT") {
+    if (pathname.startsWith("/api")) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Rate limited by global security network",
+        }),
+        { status: 429 }
+      );
+    }
+  }
 
-  // 🔐 ADMIN PROTECTION
+  // 🔐 ADMIN CONTROL
   if (pathname.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 💎 ELITE ROUTES
+  // 💎 ELITE ACCESS CONTROL
   if (pathname.startsWith("/elite")) {
     if (!["elite", "admin"].includes(role)) {
       return NextResponse.redirect(new URL("/pricing", req.url));
     }
   }
 
-  // 💳 API PROTECTION (AI COACH LIMITING)
+  // 💳 COACH API PROTECTION
   if (pathname.startsWith("/api/coach")) {
     if (plan === "free") {
       return NextResponse.redirect(new URL("/pricing", req.url));
@@ -130,7 +176,7 @@ export async function middleware(req) {
   return NextResponse.next();
 }
 
-// ⚡ APPLY TO ALL NON-STATIC ROUTES
+// ⚡ GLOBAL MATCHER
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico).*)",
