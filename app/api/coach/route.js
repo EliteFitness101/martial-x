@@ -1,49 +1,66 @@
 export async function POST(req) {
-  const { message, email } = await req.json();
+  try {
+    const { message, email } = await req.json();
 
-  const check = await fetch(
-    `${process.env.SUPABASE_URL}/rest/v1/customers?email=eq.${email}`,
-    {
-      headers: {
-        apikey: process.env.SUPABASE_KEY,
-        Authorization: `Bearer ${process.env.SUPABASE_KEY}`
+    // 🔐 Check subscription
+    const check = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/customers?email=eq.${email}`,
+      {
+        headers: {
+          apikey: process.env.SUPABASE_KEY,
+          Authorization: `Bearer ${process.env.SUPABASE_KEY}`
+        }
       }
+    );
+
+    const users = await check.json();
+
+    if (!users.length || users[0].status !== "active") {
+      return Response.json({
+        reply: "🔒 Subscribe to ChatB2K to unlock full coaching."
+      });
     }
-  );
 
-  const users = await check.json();
+    const plan = users[0]?.plan || "starter";
 
-  if (!users.length) {
-    return Response.json({
-      reply: "🔒 Pay ₦1,000 to unlock ChatB2K full coaching."
-    });
-  }
+    // 🤖 AI
+    const ai = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-5-mini",
+        input: `
+You are ChatB2K, elite Nigerian fitness AI coach.
 
-  const ai = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "gpt-5-mini",
-      input: `
-You are ChatB2K, an elite Nigerian boxing and fitness AI coach.
+User plan: ${plan}
 
 Rules:
-- Keep answers under 2 sentences
-- Be practical
-- Motivate user
-- Recommend Martial X
+- Starter → simple advice
+- Pro → detailed coaching + nutrition
+- Keep answers short
+- Motivate and guide toward Martial X
 
 User: ${message}
 `
-    })
-  });
+      })
+    });
 
-  const data = await ai.json();
+    const data = await ai.json();
 
-  return Response.json({
-    reply: data.output?.[0]?.content?.[0]?.text || "Stay consistent and disciplined."
-  });
+    return Response.json({
+      reply:
+        data.output?.[0]?.content?.[0]?.text ||
+        "Stay consistent. Discipline wins."
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    return Response.json({
+      reply: "⚡ Stay consistent. Your progress matters."
+    });
+  }
 }
